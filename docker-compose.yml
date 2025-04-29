@@ -1,0 +1,32 @@
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "4850:4850"
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  seeder:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    command: ["python", "seeder.py"]
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/
+    restart: "no"   # optionnel : le seeder s'arrête une fois terminé
+
+volumes:
+  mongo_data:

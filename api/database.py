@@ -1,0 +1,9 @@
+from pymongo import MongoClient
+import os
+
+MONGO_URL = os.getenv("MONGO_URL", "mongodb://mongo:27017/")
+client = MongoClient(MONGO_URL)
+db = client["magasin_musique"]
+
+collection_vinyles = db["vinyles"]
+collection_dvds = db["dvds"]
