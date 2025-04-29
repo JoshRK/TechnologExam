@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from typing import List
-##from .musique import Musique   # import relatif si votre package est un module
+###from .musique import Musique   # import relatif si votre package est un module
 
 @dataclass
 class Magasin:
