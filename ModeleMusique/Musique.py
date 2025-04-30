@@ -1,5 +1,3 @@
-# musique.py
-
 from dataclasses import dataclass, field
 import re
 
@@ -9,14 +7,25 @@ class Musique:
     artiste: str
     immatriculation: str = field(repr=False)
 
-    def __post_init__(self) -> None:
-        """
-        Valide que l'immatriculation est au format XX/123/ABC/1234
-        (2 lettres, 3 chiffres, 3 lettres, 4 chiffres).
-        """
-        pattern = r"^[A-Z]{2}/\d{3}/[A-Z]{3}/\d{4}$"
-        if not re.fullmatch(pattern, self.immatriculation):
-            raise ValueError(
-                f"Immatriculation invalide « {self.immatriculation} » ; "
-                "doit être au format XX/123/ABC/1234"
-            )
+    def immatriculation_valide(self) -> bool:
+        match = re.fullmatch(r"^([A-Z]{2})/(\d{3})/([A-Z]{3})/(\d{4})$", self.immatriculation)
+        if not match:
+            return False
+
+        initiales, duree_str, genre, identifiant = match.groups()
+
+        attendues = ''.join([mot[0].upper() for mot in self.artiste.split()[:2]])
+        if initiales != attendues:
+            return False
+
+        duree = int(duree_str)
+        if not (60 < duree < 300):
+            return False
+
+        if genre not in ["POP", "RAP", "RNB"]:
+            return False
+
+        if "6" in identifiant:
+            return False
+
+        return True

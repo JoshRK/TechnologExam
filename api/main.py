@@ -4,6 +4,9 @@ from typing import List
 import re
 from database import collection_vinyles, collection_dvds
 from bson import ObjectId
+import subprocess
+from fastapi.responses import JSONResponse
+import os
 
 app = FastAPI()
 
@@ -42,3 +45,45 @@ def lister_vinyles():
 def lister_cds():
     results = list(collection_dvds.find({}, {'_id': 0}))
     return results
+
+@app.get("/vinyles/{genre}", response_model=List[Musique])
+def lister_vinyles_par_genre(genre: str):
+    genre = genre.upper()
+    if genre not in ["POP", "RAP", "RNB"]:
+        raise HTTPException(status_code=400, detail="Genre invalide (choisir POP, RAP ou RNB)")
+
+    results = list(collection_vinyles.find(
+        {"immatriculation": {"$regex": f"/{genre}/"}},  # match par genre dans l'immatriculation
+        {"_id": 0}
+    ))
+    return results
+
+@app.post("/debug/tests")
+def run_tests_json():
+    tests_dir = os.path.join(os.path.dirname(__file__), "tests")
+    try:
+        result = subprocess.run(
+            ["python", "-m", "unittest", "discover", "-s", tests_dir],
+            capture_output=True,
+            text=True,
+            timeout=15
+        )
+
+
+        output = result.stdout + result.stderr
+
+        match = re.search(r"Ran (\d+) tests? in", output)
+        total = int(match.group(1)) if match else 0
+        failed = len(re.findall(r"FAIL:", output)) + len(re.findall(r"ERROR:", output))
+        passed = total - failed
+
+        return JSONResponse({
+            "total": total,
+            "passed": passed,
+            "failed": failed,
+            "status": "OK" if failed == 0 else "FAILED",
+            "details": output.strip()[-1000:]
+        })
+
+    except subprocess.TimeoutExpired:
+        return JSONResponse({"error": "Test timeout"}, status_code=500)
